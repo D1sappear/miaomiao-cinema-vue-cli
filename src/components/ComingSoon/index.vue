@@ -1,31 +1,34 @@
 <template>
   <div class="movie_body">
-    <ul v-if="comingMovieList">
-      <!--<li>
-        <div class="pic_show"><img src="/images/movie_1.jpg"></div>
-        <div class="info_list">
-          <h2>无名之辈</h2>
-          <p><span class="person">17746</span> 人想看</p>
-          <p>主演: 陈建斌,任素汐,潘斌龙</p>
-          <p>2018-11-30上映</p>
-        </div>
-        <div class="btn_pre">
-          预售
-        </div>
-      </li>-->
-      <li v-for="item in comingMovieList" :key="item.id">
-        <div class="pic_show"><img :src="item.img | setWH('128.180')"></div>
-        <div class="info_list">
-          <h2>{{item.nm}} <img v-if="item.version" src="@/assets/maxs.png" alt=""></h2>
-          <p><span class="person">{{item.wish}}</span> 人想看</p>
-          <p>主演: {{item.star}}</p>
-          <p>{{item.rt}}上映</p>
-        </div>
-        <div class="btn_pre">
-          预售
-        </div>
-      </li>
-    </ul>
+    <Loading v-if="isLoading" />
+    <Scroller v-else :handleToScroll="handleToScroll" :handleToTouchEnd="handleToTouchEnd">
+      <ul>
+        <!--<li>
+          <div class="pic_show"><img src="/images/movie_1.jpg"></div>
+          <div class="info_list">
+            <h2>无名之辈</h2>
+            <p><span class="person">17746</span> 人想看</p>
+            <p>主演: 陈建斌,任素汐,潘斌龙</p>
+            <p>2018-11-30上映</p>
+          </div>
+          <div class="btn_pre">
+            预售
+          </div>
+        </li>-->
+        <li v-for="item in comingMovieList" :key="item.id">
+          <div class="pic_show" @tap="handleToDetail(item.id)"><img :src="item.img | setWH('128.180')"></div>
+          <div class="info_list">
+            <h2 @tap="handleToDetail(item.id)">{{item.nm}} <img v-if="item.version" src="@/assets/maxs.png" alt=""></h2>
+            <p><span class="person">{{item.wish}}</span> 人想看</p>
+            <p>主演: {{item.star}}</p>
+            <p>{{item.rt}}上映</p>
+          </div>
+          <div class="btn_pre">
+            预售
+          </div>
+        </li>
+      </ul>
+    </Scroller>
   </div>
 </template>
 
@@ -34,17 +37,49 @@
     name: 'ComingSoon',
     data () {
       return {
-        comingMovieList: []
+        comingMovieList: [],
+        isLoading: true,
+        preCityId: -1
       }
     },
-    mounted() {
-      this.axios.get('/api/movieComingList?cityId=10').then((res) => {
+    activated() {
+      var cityId = this.$store.state.city.id
+      if (this.preCityId === cityId) { return }
+      this.isLoading = true
+      this.axios.get('/api/movieComingList?cityId=' + cityId).then((res) => {
         var msg = res.data.msg
         if (msg === 'ok') {
           this.comingMovieList = res.data.data.comingList
+          this.isLoading = false
+          this.preCityId = cityId
         }
         // console.log(this.comingMovieList);
       })
+    },
+    methods: {
+      handleToScroll (pos) {
+        if (pos.y > 30) {
+          this.pullDownMsg = '正在更新中'
+        }
+      },
+      handleToTouchEnd (pos) {
+        if (pos.y > 30) {
+          this.axios.get('/api/movieOnInfoList?cityId=10').then((res) => {
+            var msg = res.data.msg
+            if (msg === 'ok') {
+              this.pullDownMsg = '更新完成'
+              setTimeout(() => {
+                this.movieList = res.data.data.movieList
+                this.pullDownMsg = ''
+              }, 1000)
+            }
+          })
+        }
+      },
+      handleToDetail (movieId) {
+        console.log(movieId);
+        this.$router.push('/movie/detail/2/' + movieId)
+      }
     }
   }
 </script>

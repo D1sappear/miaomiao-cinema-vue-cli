@@ -4,7 +4,7 @@
     <div id="content">
       <div class="movie_menu">
         <router-link tag="div" to="/movie/city" class="city_name">
-          <span>大连</span><i class="iconfont icon-lower-triangle"></i>
+          <span>{{$store.state.city.nm}}</span><i class="iconfont icon-lower-triangle"></i>
         </router-link>
         <div class="hot_swtich">
           <router-link tag="div" to="/movie/nowPlaying" class="hot_item">正在热映</router-link>
@@ -19,17 +19,58 @@
       </keep-alive>
     </div>
     <TabBar />
+    <router-view name="detail" />
   </div>
 </template>
 
 <script>
   import Header from '@/components/Header'
   import TabBar from '@/components/TabBar'
+  // import MessageBox from '@/components/JS/MessageBox'
+  import {messageBox} from "../../components/JS";
+
   export default {
     name: 'Movie',
     components: {
       Header,
-      TabBar
+      TabBar,
+      // MessageBox
+    },
+    mounted() {
+      setTimeout(() => {
+        this.axios.get('/api/getLocation').then((res) => {
+          var msg = res.data.msg
+
+          var nm = res.data.data.nm
+          var id = res.data.data.id
+          if (this.$store.state.city.id == id) { return }
+          if (msg === 'ok') {
+            messageBox({
+              title: '定位',
+              content: nm,
+              cancel: '取消',
+              ok: '切换定位',
+              handleOk() {
+                window.localStorage.setItem('nowNm', nm)
+                window.localStorage.setItem('nowId', id)
+                window.location.reload()
+              }
+            })
+          }
+        })
+      }, 3000)
+      /*messageBox({
+        title: '定位',
+        content: '北京',
+        cancel: '取消',
+        ok: '切换定位',
+        handleCancel() {
+          console.log(1);
+        },
+        handleOk() {
+          console.log(2);
+        }
+      })*/
     }
   }
 </script>

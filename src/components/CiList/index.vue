@@ -1,97 +1,107 @@
 <template>
   <div class="cinema_body">
-    <ul>
-      <li>
-        <div>
-          <span>大地影院(澳东世纪店)</span>
-          <span class="q"><span class="price">22.9</span> 元起</span>
-        </div>
-        <div class="address">
-          <span>金州区大连经济技术开发区澳东世纪3层</span>
-          <span>1763.5km</span>
-        </div>
-        <div class="card">
-          <div>小吃</div>
-          <div>折扣卡</div>
-        </div>
-      </li>
-      <li>
-        <div>
-          <span>大地影院(澳东世纪店)</span>
-          <span class="q"><span class="price">22.9</span> 元起</span>
-        </div>
-        <div class="address">
-          <span>金州区大连经济技术开发区澳东世纪3层</span>
-          <span>1763.5km</span>
-        </div>
-        <div class="card">
-          <div>小吃</div>
-          <div>折扣卡</div>
-        </div>
-      </li>
-      <li>
-        <div>
-          <span>大地影院(澳东世纪店)</span>
-          <span class="q"><span class="price">22.9</span> 元起</span>
-        </div>
-        <div class="address">
-          <span>金州区大连经济技术开发区澳东世纪3层</span>
-          <span>1763.5km</span>
-        </div>
-        <div class="card">
-          <div>小吃</div>
-          <div>折扣卡</div>
-        </div>
-      </li>
-      <li>
-        <div>
-          <span>大地影院(澳东世纪店)</span>
-          <span class="q"><span class="price">22.9</span> 元起</span>
-        </div>
-        <div class="address">
-          <span>金州区大连经济技术开发区澳东世纪3层</span>
-          <span>1763.5km</span>
-        </div>
-        <div class="card">
-          <div>小吃</div>
-          <div>折扣卡</div>
-        </div>
-      </li>
-      <li>
-        <div>
-          <span>大地影院(澳东世纪店)</span>
-          <span class="q"><span class="price">22.9</span> 元起</span>
-        </div>
-        <div class="address">
-          <span>金州区大连经济技术开发区澳东世纪3层</span>
-          <span>1763.5km</span>
-        </div>
-        <div class="card">
-          <div>小吃</div>
-          <div>折扣卡</div>
-        </div>
-      </li>
-      <li>
-        <div>
-          <span>大地影院(澳东世纪店)</span>
-          <span class="q"><span class="price">22.9</span> 元起</span>
-        </div>
-        <div class="address">
-          <span>金州区大连经济技术开发区澳东世纪3层</span>
-          <span>1763.5km</span>
-        </div>
-        <div class="card">
-          <div>小吃</div>
-          <div>折扣卡</div>
-        </div>
-      </li>
-    </ul>
+    <Loading v-if="isLoading" />
+    <Scroller v-else :handleToScroll="handleToScroll" :handleToTouchEnd="handleToTouchEnd">
+      <ul>
+        <!--<li>
+          <div>
+            <span>大地影院(澳东世纪店)</span>
+            <span class="q"><span class="price">22.9</span> 元起</span>
+          </div>
+          <div class="address">
+            <span>金州区大连经济技术开发区澳东世纪3层</span>
+            <span>1763.5km</span>
+          </div>
+          <div class="card">
+            <div>小吃</div>
+            <div>折扣卡</div>
+          </div>
+        </li>-->
+        <li v-for="item in cinemasList">
+          <div>
+            <span>{{item.nm}}</span>
+            <span class="q"><span class="price">{{item.sellPrice}}</span> 元起</span>
+          </div>
+          <div class="address">
+            <span>{{item.addr}}</span>
+            <span>{{item.distance}}</span>
+          </div>
+          <div class="card">
+            <div v-for="(num, key) in item.tag" v-if="num===1" :class="key | classCard" :key="key">{{key | formatCard}}</div>
+          </div>
+        </li>
+      </ul>
+    </Scroller>
   </div>
 </template>
 
 <script>
   export default {
-    name: 'CiList'
+    name: 'CiList',
+    data() {
+      return {
+        cinemasList: [],
+        isLoading: true
+      }
+    },
+    mounted() {
+      this.axios.get('/json/cinemaList.json').then((res) => {
+        // console.log(res);
+        this.cinemasList = res.data.cinemas
+        this.isLoading = false
+      })
+    },
+    filters: {
+      formatCard(key) {
+        var Card = [
+          {key: 'allowRefund', value: '改签'},
+          {key: 'endorse', value: '退订'},
+          {key: 'sell', value: '折扣卡'},
+          {key: 'snack', value: '小吃'}
+        ]
+        for (var i=0 ; i<Card.length; i++) {
+          if (Card[i].key === key) {
+            return Card[i].value
+          }
+        }
+        return ''
+      },
+      classCard(key) {
+        var Card = [
+          {key: 'allowRefund', value: 'bl'},
+          {key: 'endorse', value: 'bl'},
+          {key: 'sell', value: 'or'},
+          {key: 'snack', value: 'or'}
+        ]
+        for (var i=0 ; i<Card.length; i++) {
+          if (Card[i].key === key) {
+            return Card[i].value
+          }
+        }
+        return ''
+      }
+    },
+    methods: {
+      handleToScroll (pos) {
+        if (pos.y > 30) {
+          this.pullDownMsg = '正在更新中'
+        }
+      },
+      handleToTouchEnd (pos) {
+        if (pos.y > 30) {
+          this.axios.get('/api/movieOnInfoList?cityId=10').then((res) => {
+            var msg = res.data.msg
+            if (msg === 'ok') {
+              this.pullDownMsg = '更新完成'
+              setTimeout(() => {
+                this.movieList = res.data.data.movieList
+                this.pullDownMsg = ''
+              }, 1000)
+            }
+          })
+        }
+      }
+    }
   }
 </script>
 
